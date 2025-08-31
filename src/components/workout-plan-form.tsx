@@ -4,8 +4,7 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2, Sparkles } from "lucide-react"
-import ReactMarkdown from 'react-markdown'
+import { Loader2, Sparkles, Target, Weight, Repeat, Clock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,7 +25,8 @@ import {
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { generateWorkoutPlan } from "@/ai/flows/generate-workout-plan"
 import type { GenerateWorkoutPlanOutput } from "@/ai/flows/generate-workout-plan"
@@ -177,7 +177,7 @@ export function WorkoutPlanForm() {
                             max={120}
                             step={5}
                             defaultValue={[field.value]}
-                            onValueChange={(values) => field.onChange(values[0])}
+                            onValue-change={(values) => field.onChange(values[0])}
                         />
                       </FormControl>
                       <div className="font-semibold w-16 text-center text-primary">{field.value} 분</div>
@@ -202,7 +202,7 @@ export function WorkoutPlanForm() {
       </Card>
 
       {isLoading && !result && (
-        <Card className="mt-8 shadow-lg border-primary/30 flex items-center justify-center h-64">
+        <Card className="mt-8 shadow-lg border-primary/30 flex items-center justify-center h-96">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </Card>
       )}
@@ -210,15 +210,45 @@ export function WorkoutPlanForm() {
       {result && (
         <Card className="mt-8 shadow-lg border-primary/30">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary">AI 추천 운동 계획</CardTitle>
+            <CardTitle className="text-2xl text-primary">{result.title}</CardTitle>
+            <CardDescription>AI가 생성한 당신만을 위한 오늘의 운동 루틴입니다.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-4 rounded-lg bg-secondary">
-               <h4 className="font-semibold mb-2">오늘의 동기부여 메시지</h4>
-               <p className="text-primary font-semibold italic">"{result.motivationalMessage}"</p>
+            <div className="p-4 rounded-lg bg-secondary/50 border border-secondary">
+               <h4 className="font-semibold mb-2 text-primary">오늘의 동기부여 메시지</h4>
+               <p className="font-semibold italic text-foreground/90">"{result.motivationalMessage}"</p>
             </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-strong:text-primary">
-                <ReactMarkdown>{result.workoutPlan}</ReactMarkdown>
+            
+            <div className="space-y-4">
+              {result.workoutPlan.map((exercise, index) => (
+                <Card key={index} className="bg-card/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center justify-between">
+                      {exercise.name}
+                      <Badge variant="secondary">{exercise.part}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <p className="text-muted-foreground">{exercise.description}</p>
+                      <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                        <div className="bg-secondary/30 p-2 rounded-md">
+                          <p className="font-bold text-primary">{exercise.sets} 세트</p>
+                           <p className="text-xs text-muted-foreground">Sets</p>
+                        </div>
+                        <div className="bg-secondary/30 p-2 rounded-md">
+                           <p className="font-bold text-primary">{exercise.reps}</p>
+                           <p className="text-xs text-muted-foreground">Reps</p>
+                        </div>
+                        <div className="bg-secondary/30 p-2 rounded-md">
+                           <p className="font-bold text-primary">{exercise.rest}초</p>
+                           <p className="text-xs text-muted-foreground">Rest</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </CardContent>
         </Card>
