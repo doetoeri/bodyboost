@@ -15,24 +15,21 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { UserNav } from "@/components/user-nav"
 import {
   LayoutDashboard,
   Dumbbell,
-  UtensilsCrossed,
   LineChart,
   BookOpen,
   Settings,
 } from "lucide-react"
 
 const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/workout", label: "Workout", icon: Dumbbell },
-  { href: "/diet", label: "Diet", icon: UtensilsCrossed },
-  { href: "/progress", label: "Progress", icon: LineChart },
-  { href: "/resources", label: "Resources", icon: BookOpen },
+  { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+  { href: "/workout", label: "운동 생성", icon: Dumbbell },
+  { href: "/progress", label: "진행 상황", icon: LineChart },
+  { href: "/resources", label: "운동 정보", icon: BookOpen },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -52,10 +49,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   asChild
                   isActive={pathname === item.href}
                   className="w-full justify-start"
+                  tooltip={item.label}
                 >
                   <Link href={item.href}>
                     <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
+                    <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -65,10 +63,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className="w-full justify-start">
+              <SidebarMenuButton asChild className="w-full justify-start" tooltip="설정">
                 <Link href="#">
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                   <span>설정</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

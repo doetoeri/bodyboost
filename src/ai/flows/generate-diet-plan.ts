@@ -1,12 +1,7 @@
 'use server';
 
-/**
- * @fileOverview AI-powered diet plan generator for students.
- *
- * - generateDietPlan - A function that generates a personalized diet plan based on user input.
- * - GenerateDietPlanInput - The input type for the generateDietPlan function.
- * - GenerateDietPlanOutput - The return type for the generateDietPlan function.
- */
+// This flow is not used in the current app configuration.
+// It is kept for potential future use.
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
