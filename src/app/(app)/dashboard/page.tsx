@@ -11,19 +11,30 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Dumbbell, LineChart, Target, Loader2 } from "lucide-react"
+import { Dumbbell, LineChart, Target, Loader2, Star } from "lucide-react"
 import { generateWorkoutPlan } from "@/ai/flows/generate-workout-plan"
 import type { GenerateWorkoutPlanOutput } from "@/ai/flows/generate-workout-plan"
 import { useToast } from "@/hooks/use-toast"
+import { useLocalStorage } from "@/hooks/use-local-storage"
+import type { Measurement } from "@/app/(app)/progress/page"
+import { generateDailyGoal } from "@/ai/flows/generate-daily-goal"
+import type { GenerateDailyGoalOutput } from "@/ai/flows/generate-daily-goal"
+
 
 export default function DashboardPage() {
   const [workout, setWorkout] = React.useState<GenerateWorkoutPlanOutput | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const [dailyGoal, setDailyGoal] = React.useState<GenerateDailyGoalOutput | null>(null);
+  const [isLoadingWorkout, setIsLoadingWorkout] = React.useState(true)
+  const [isLoadingGoal, setIsLoadingGoal] = React.useState(true);
   const { toast } = useToast()
+  const [measurementData] = useLocalStorage<Measurement[]>("measurementData", []);
 
   React.useEffect(() => {
-    async function getInitialWorkout() {
-      setIsLoading(true)
+    async function getInitialData() {
+      setIsLoadingWorkout(true)
+      setIsLoadingGoal(true)
+
+      // Fetch workout plan
       try {
         const result = await generateWorkoutPlan({
           fitnessLevel: "beginner",
@@ -38,12 +49,28 @@ export default function DashboardPage() {
           description: "오늘의 운동을 불러오는 데 실패했습니다.",
         })
       } finally {
-        setIsLoading(false)
+        setIsLoadingWorkout(false)
+      }
+
+      // Fetch daily goal
+      try {
+        const goalResult = await generateDailyGoal({ history: measurementData.slice(-5) }); // Use last 5 records
+        setDailyGoal(goalResult);
+      } catch (error) {
+         toast({
+          variant: "destructive",
+          title: "오류 발생",
+          description: "오늘의 목표를 불러오는 데 실패했습니다.",
+        })
+      } finally {
+        setIsLoadingGoal(false);
       }
     }
-    getInitialWorkout()
+    getInitialData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []) // Depend on measurementData to refetch goal when it changes, but we only want to run once on load.
+
+  const isLoading = isLoadingWorkout || isLoadingGoal;
 
   return (
     <div className="flex flex-col gap-8">
@@ -53,6 +80,40 @@ export default function DashboardPage() {
           오늘도 목표를 향해! AI가 추천하는 맞춤 운동으로 몸을 만들어보세요.
         </p>
       </div>
+
+       <Card className="bg-gradient-to-tr from-accent/20 to-background border-accent/50">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+             <Star className="h-7 w-7 text-accent" />
+            <CardTitle className="text-2xl text-accent">오늘의 목표</CardTitle>
+          </div>
+          <CardDescription>AI가 당신의 기록을 분석해서 설정한 오늘의 미션입니다.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoadingGoal ? (
+            <div className="flex items-center justify-center h-24">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+          ) : dailyGoal ? (
+            <>
+              <div>
+                <h4 className="font-semibold text-foreground">🎯 핵심 포커스</h4>
+                <p className="text-muted-foreground">{dailyGoal.mainFocus}</p>
+              </div>
+               <div>
+                <h4 className="font-semibold text-foreground">💡 작은 습관 제안</h4>
+                <p className="text-muted-foreground">{dailyGoal.habitSuggestion}</p>
+              </div>
+              <blockquote className="border-l-4 border-accent pl-4 italic text-foreground/90">
+                "{dailyGoal.motivationalMessage}"
+              </blockquote>
+            </>
+          ) : (
+            <p className="text-muted-foreground">목표를 불러오지 못했습니다. 진행 상황 페이지에서 기록을 추가해보세요.</p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -62,7 +123,7 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoadingWorkout ? (
               <div className="flex items-center justify-center h-40">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
@@ -95,7 +156,7 @@ export default function DashboardPage() {
               <CardTitle>동기부여 한마디</CardTitle>
             </CardHeader>
             <CardContent>
-               {isLoading ? (
+               {isLoadingWorkout ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : workout ? (
                 <blockquote className="text-xl font-semibold leading-snug">
