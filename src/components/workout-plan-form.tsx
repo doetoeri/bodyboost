@@ -177,7 +177,7 @@ export function WorkoutPlanForm() {
                             max={120}
                             step={5}
                             defaultValue={[field.value]}
-                            onValue-change={(values) => field.onChange(values[0])}
+                            onValueChange={(values) => field.onChange(values[0])}
                         />
                       </FormControl>
                       <div className="font-semibold w-16 text-center text-primary">{field.value} 분</div>
