@@ -1,7 +1,7 @@
 'use server'
 
 import { generateWorkoutPlan, GenerateWorkoutPlanInput, GenerateWorkoutPlanOutput } from '@/ai/flows/generate-workout-plan'
-import { analyzeBodyMeasurement, AnalyzeBodyMeasurementInput, AnalyzeBodyMeasurementOutput } from '@/ai/flows/analyze-body-measurement'
+import { analyzeBodyMeasurement as analyzeBodyMeasurementFlow, AnalyzeBodyMeasurementInput, AnalyzeBodyMeasurementOutput } from '@/ai/flows/analyze-body-measurement'
 
 type ActionResult<T> = {
     success: true;
@@ -24,7 +24,7 @@ export async function getWorkoutPlan(input: GenerateWorkoutPlanInput): Promise<A
 
 export async function analyzeBodyMeasurement(input: AnalyzeBodyMeasurementInput): Promise<ActionResult<AnalyzeBodyMeasurementOutput>> {
   try {
-    const result = await analyzeBodyMeasurement(input);
+    const result = await analyzeBodyMeasurementFlow(input);
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
