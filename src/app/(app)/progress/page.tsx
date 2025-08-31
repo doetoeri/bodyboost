@@ -40,7 +40,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { analyzeBodyMeasurement } from "@/lib/actions"
+import { analyzeBodyMeasurement } from "@/ai/flows/analyze-body-measurement"
 import type { AnalyzeBodyMeasurementOutput } from "@/ai/flows/analyze-body-measurement"
 
 
@@ -75,7 +75,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 export default function ProgressPage() {
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(true)
   const [analysis, setAnalysis] = React.useState<AnalyzeBodyMeasurementOutput | null>(null)
   const { toast } = useToast()
 
@@ -83,25 +83,46 @@ export default function ProgressPage() {
     resolver: zodResolver(formSchema),
     defaultValues: { arm: 0, shoulder: 0, thigh: 0 },
   })
+  
+  React.useEffect(() => {
+    async function getInitialAnalysis() {
+        setIsLoading(true);
+        try {
+            const result = await analyzeBodyMeasurement({ arm: 0, shoulder: 0, thigh: 0 });
+            setAnalysis(result);
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "오류 발생",
+                description: "초기 데이터를 불러오는 데 실패했습니다.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    getInitialAnalysis();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true)
     setAnalysis(null)
-    const result = await analyzeBodyMeasurement(values)
-    setIsLoading(false)
-
-    if (result.success && result.data) {
-      setAnalysis(result.data)
+    try {
+      const result = await analyzeBodyMeasurement(values)
+      setAnalysis(result)
       toast({
         title: "AI 분석 완료!",
         description: "신체 변화에 대한 AI 분석 결과를 확인해보세요.",
       })
-    } else {
-      toast({
+    } catch (error) {
+       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+       toast({
         variant: "destructive",
         title: "오류 발생",
-        description: result.error || "AI 분석에 실패했습니다. 다시 시도해주세요.",
+        description: `AI 분석에 실패했습니다: ${errorMessage}`,
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -167,18 +188,24 @@ export default function ProgressPage() {
           </Form>
         </Card>
 
+        {isLoading && !analysis && (
+            <Card className="bg-secondary flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </Card>
+        )}
+        
         {analysis && (
           <Card className="bg-secondary">
             <CardHeader>
-              <CardTitle>AI 분석 결과</CardTitle>
+              <CardTitle>{analysis.title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-semibold text-primary">{analysis.title}</h4>
+                <h4 className="font-semibold text-primary">AI 분석</h4>
                 <p className="text-muted-foreground whitespace-pre-wrap">{analysis.analysis}</p>
               </div>
               <div>
-                <h4 className="font-semibold text-primary">AI 추천 운동</h4>
+                <h4 className="font-semibold text-primary">AI 추천</h4>
                 <p className="text-muted-foreground whitespace-pre-wrap">{analysis.recommendation}</p>
               </div>
             </CardContent>

@@ -28,7 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { getWorkoutPlan } from "@/lib/actions"
+import { generateWorkoutPlan } from "@/ai/flows/generate-workout-plan"
 import type { GenerateWorkoutPlanOutput } from "@/ai/flows/generate-workout-plan"
 
 const formSchema = z.object({
@@ -67,20 +67,21 @@ export function WorkoutPlanForm() {
   async function onSubmit(values: FormValues) {
     setIsLoading(true)
     setResult(null)
-    const actionResult = await getWorkoutPlan({
-      ...values,
-      availableEquipment: values.availableEquipment as ("dumbbells" | "bodyweight")[],
-    })
-    setIsLoading(false)
-
-    if (actionResult.success && actionResult.data) {
-      setResult(actionResult.data)
-    } else {
+    try {
+        const actionResult = await generateWorkoutPlan({
+          ...values,
+          availableEquipment: values.availableEquipment as ("dumbbells" | "bodyweight")[],
+        })
+        setResult(actionResult)
+    } catch(error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
       toast({
         variant: "destructive",
         title: "오류 발생",
-        description: actionResult.error || "운동 계획 생성에 실패했습니다. 다시 시도해주세요.",
+        description: `운동 계획 생성에 실패했습니다: ${errorMessage}`,
       })
+    } finally {
+        setIsLoading(false)
     }
   }
 
@@ -199,6 +200,12 @@ export function WorkoutPlanForm() {
           </Form>
         </CardContent>
       </Card>
+
+      {isLoading && !result && (
+        <Card className="mt-8 shadow-lg border-primary/30 flex items-center justify-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </Card>
+      )}
 
       {result && (
         <Card className="mt-8 shadow-lg border-primary/30">
