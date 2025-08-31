@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import {
   Card,
@@ -10,9 +11,40 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Dumbbell, LineChart, Target } from "lucide-react"
+import { Dumbbell, LineChart, Target, Loader2 } from "lucide-react"
+import { generateWorkoutPlan } from "@/ai/flows/generate-workout-plan"
+import type { GenerateWorkoutPlanOutput } from "@/ai/flows/generate-workout-plan"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
+  const [workout, setWorkout] = React.useState<GenerateWorkoutPlanOutput | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const { toast } = useToast()
+
+  React.useEffect(() => {
+    async function getInitialWorkout() {
+      setIsLoading(true)
+      try {
+        const result = await generateWorkoutPlan({
+          fitnessLevel: "beginner",
+          availableEquipment: ["bodyweight"],
+          timeConstraints: 45,
+        })
+        setWorkout(result)
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "오류 발생",
+          description: "오늘의 운동을 불러오는 데 실패했습니다.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    getInitialWorkout()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div className="flex flex-col gap-8">
       <div className="space-y-2">
@@ -30,21 +62,29 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Dumbbell className="h-8 w-8 text-primary" />
-                <div>
-                  <h3 className="text-lg font-semibold">역삼각형 상체 집중 프로그램</h3>
-                  <p className="text-sm text-muted-foreground">45분 - 맨몸 운동</p>
-                </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-              <p className="text-muted-foreground leading-relaxed">
-                어깨는 넓게, 등은 역삼각형으로! 오늘은 상체를 폭발시키는 날입니다. 맨몸으로 할 수 있는 최고의 운동들로 구성했어요. 한계에 도전해보세요!
-              </p>
-            </div>
+            ) : workout ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Dumbbell className="h-8 w-8 text-primary" />
+                  <div>
+                    <h3 className="text-lg font-semibold">{workout.title}</h3>
+                    <p className="text-sm text-muted-foreground">45분 - 맨몸 운동</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">
+                  {workout.workoutPlan.map(ex => ex.name).join(', ')} 등으로 구성된 효과적인 운동입니다.
+                </p>
+              </div>
+            ) : (
+               <p className="text-muted-foreground">운동 계획을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
+            )}
           </CardContent>
           <CardFooter>
-            <Button asChild size="lg" className="w-full">
+            <Button asChild size="lg" className="w-full" disabled={isLoading || !workout}>
               <Link href="/workout">운동 시작하기</Link>
             </Button>
           </CardFooter>
@@ -55,9 +95,15 @@ export default function DashboardPage() {
               <CardTitle>동기부여 한마디</CardTitle>
             </CardHeader>
             <CardContent>
-              <blockquote className="text-xl font-semibold leading-snug">
-                "변화는 가장 불편한 곳에서 시작된다. 오늘 흘린 땀이 내일의 근육이 된다!"
-              </blockquote>
+               {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : workout ? (
+                <blockquote className="text-xl font-semibold leading-snug">
+                  "{workout.motivationalMessage}"
+                </blockquote>
+              ) : (
+                <p className="text-sm text-muted-foreground">...</p>
+              )}
             </CardContent>
           </Card>
           <Card>

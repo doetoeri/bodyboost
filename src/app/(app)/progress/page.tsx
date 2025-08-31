@@ -14,14 +14,6 @@ import {
   CardTitle,
   CardFooter
 } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -44,27 +36,18 @@ import { analyzeBodyMeasurement } from "@/ai/flows/analyze-body-measurement"
 import type { AnalyzeBodyMeasurementOutput } from "@/ai/flows/analyze-body-measurement"
 
 
-const measurementData = [
-  { date: "06-01", arm: 30, shoulder: 110, thigh: 50 },
-  { date: "06-08", arm: 30.5, shoulder: 111, thigh: 50.5 },
-  { date: "06-15", arm: 31, shoulder: 112, thigh: 51 },
-  { date: "06-22", arm: 31.2, shoulder: 112.5, thigh: 51.5 },
-  { date: "06-29", arm: 32, shoulder: 114, thigh: 52 },
-]
+type Measurement = {
+  date: string;
+  arm: number;
+  shoulder: number;
+  thigh: number;
+};
 
 const chartConfig = {
   arm: { label: "팔 둘레 (cm)", color: "hsl(var(--chart-1))" },
   shoulder: { label: "어깨 둘레 (cm)", color: "hsl(var(--chart-2))" },
   thigh: { label: "허벅지 둘레 (cm)", color: "hsl(var(--chart-3))" },
 }
-
-const workoutLog = [
-  { date: "2024-06-29", workout: "역삼각형 상체 집중", duration: "45분", status: "완료" },
-  { date: "2024-06-28", workout: "꿀벅지 하체 조지기", duration: "50분", status: "완료" },
-  { date: "2024-06-27", workout: "어깨 깡패 데이", duration: "40분", status: "완료" },
-  { date: "2024-06-25", workout: "전신 근력 폭발", duration: "60분", status: "건너뜀" },
-  { date: "2024-06-24", workout: "팔뚝 강화", duration: "30분", status: "완료" },
-]
 
 const formSchema = z.object({
   arm: z.coerce.number().min(10, "정확한 팔 둘레를 입력해주세요.").max(100),
@@ -77,6 +60,7 @@ type FormValues = z.infer<typeof formSchema>
 export default function ProgressPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [analysis, setAnalysis] = React.useState<AnalyzeBodyMeasurementOutput | null>(null)
+  const [measurementData, setMeasurementData] = React.useState<Measurement[]>([])
   const { toast } = useToast()
 
   const form = useForm<FormValues>({
@@ -110,10 +94,16 @@ export default function ProgressPage() {
     try {
       const result = await analyzeBodyMeasurement(values)
       setAnalysis(result)
+      const newMeasurement: Measurement = {
+        date: new Date().toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }).replace(/\./g, '-').slice(0, -1),
+        ...values
+      };
+      setMeasurementData(prevData => [...prevData, newMeasurement]);
       toast({
         title: "AI 분석 완료!",
         description: "신체 변화에 대한 AI 분석 결과를 확인해보세요.",
       })
+      form.reset({ arm: 0, shoulder: 0, thigh: 0 });
     } catch (error) {
        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
        toast({
@@ -139,21 +129,27 @@ export default function ProgressPage() {
         <CardHeader>
           <CardTitle>신체 둘레 변화</CardTitle>
           <CardDescription>
-            지난 몇 주간의 신체 둘레 변화 그래프입니다. 성장을 눈으로 확인하세요!
+            신체 둘레 변화 그래프입니다. 성장을 눈으로 확인하세요!
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-72 w-full">
-            <LineChart accessibilityLayer data={measurementData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Line dataKey="arm" type="monotone" stroke="var(--color-arm)" strokeWidth={3} dot={true} name="팔" />
-              <Line dataKey="shoulder" type="monotone" stroke="var(--color-shoulder)" strokeWidth={3} dot={true} name="어깨" />
-              <Line dataKey="thigh" type="monotone" stroke="var(--color-thigh)" strokeWidth={3} dot={true} name="허벅지" />
-            </LineChart>
-          </ChartContainer>
+          {measurementData.length > 0 ? (
+            <ChartContainer config={chartConfig} className="h-72 w-full">
+              <LineChart accessibilityLayer data={measurementData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Line dataKey="arm" type="monotone" stroke="var(--color-arm)" strokeWidth={3} dot={true} name="팔" />
+                <Line dataKey="shoulder" type="monotone" stroke="var(--color-shoulder)" strokeWidth={3} dot={true} name="어깨" />
+                <Line dataKey="thigh" type="monotone" stroke="var(--color-thigh)" strokeWidth={3} dot={true} name="허벅지" />
+              </LineChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex h-72 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-secondary/20">
+              <p className="text-muted-foreground">데이터를 추가하여 성장을 추적하세요.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
       
@@ -180,8 +176,8 @@ export default function ProgressPage() {
                   )} />
               </CardContent>
               <CardFooter>
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 분석 중...</>) : "분석 요청하기"}
+                <Button type="submit" disabled={isLoading && !analysis} className="w-full">
+                  {(isLoading && !analysis) ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 분석 중...</>) : "분석 요청 및 기록 추가"}
                 </Button>
               </CardFooter>
             </form>
@@ -213,39 +209,6 @@ export default function ProgressPage() {
         )}
       </div>
 
-
-      <Card>
-        <CardHeader>
-          <CardTitle>최근 운동 기록</CardTitle>
-          <CardDescription>최근에 완료한 운동 기록입니다.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>날짜</TableHead>
-                <TableHead>운동 종류</TableHead>
-                <TableHead>시간</TableHead>
-                <TableHead className="text-right">상태</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {workoutLog.map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{log.date}</TableCell>
-                  <TableCell>{log.workout}</TableCell>
-                  <TableCell>{log.duration}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant={log.status === '완료' ? 'default' : 'destructive'}>
-                      {log.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
        <Card className="bg-gradient-to-r from-blue-500/20 via-green-500/10 to-background border-green-500/30">
         <CardHeader className="flex-row items-center gap-4">
           <Trophy className="w-10 h-10 text-green-400" />
