@@ -28,7 +28,7 @@ import { Slider } from "@/components/ui/slider"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { generateWorkoutPlan } from "@/ai/flows/generate-workout-plan"
+import { getWorkoutPlan } from "@/lib/actions"
 import type { GenerateWorkoutPlanOutput } from "@/ai/flows/generate-workout-plan"
 
 const formSchema = z.object({
@@ -67,21 +67,20 @@ export function WorkoutPlanForm() {
   async function onSubmit(values: FormValues) {
     setIsLoading(true)
     setResult(null)
-    try {
-        const actionResult = await generateWorkoutPlan({
-          ...values,
-          availableEquipment: values.availableEquipment as ("dumbbells" | "bodyweight")[],
-        })
-        setResult(actionResult)
-    } catch(error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    const actionResult = await getWorkoutPlan({
+      ...values,
+      availableEquipment: values.availableEquipment as ("dumbbells" | "bodyweight")[],
+    })
+    setIsLoading(false)
+
+    if (actionResult.success) {
+      setResult(actionResult.data)
+    } else {
       toast({
         variant: "destructive",
         title: "오류 발생",
-        description: `운동 계획 생성에 실패했습니다: ${errorMessage}`,
+        description: actionResult.error,
       })
-    } finally {
-        setIsLoading(false)
     }
   }
 

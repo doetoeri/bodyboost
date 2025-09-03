@@ -32,9 +32,11 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { analyzeBodyMeasurement } from "@/ai/flows/analyze-body-measurement"
+import { analyzeBodyMeasurement } from "@/lib/actions"
 import type { AnalyzeBodyMeasurementOutput } from "@/ai/flows/analyze-body-measurement"
 import { useLocalStorage } from "@/hooks/use-local-storage"
+import { analyzeBodyMeasurement as analyzeBodyMeasurementFlow } from "@/ai/flows/analyze-body-measurement"
+
 
 export type Measurement = {
   date: string;
@@ -83,7 +85,7 @@ export default function ProgressPage() {
         if (measurementData.length > 0) return; // Don't fetch if there's data
         setIsLoading(true);
         try {
-            const result = await analyzeBodyMeasurement({ height: 0, weight: 0, arm: 0, shoulder: 0, waist: 0, thigh: 0 });
+            const result = await analyzeBodyMeasurementFlow({ height: 0, weight: 0, arm: 0, shoulder: 0, waist: 0, thigh: 0 });
             setAnalysis(result);
         } catch (error) {
             toast({
@@ -111,9 +113,11 @@ export default function ProgressPage() {
   async function onSubmit(values: FormValues) {
     setIsLoading(true)
     setAnalysis(null)
-    try {
-      const result = await analyzeBodyMeasurement(values)
-      setAnalysis(result)
+    const result = await analyzeBodyMeasurement(values)
+    setIsLoading(false)
+
+    if (result.success) {
+      setAnalysis(result.data)
       const newMeasurement: Measurement = {
         date: new Date().toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }).replace(/\./g, ' ').replace(/ /g, '.').slice(0, -1),
         ...values
@@ -123,15 +127,12 @@ export default function ProgressPage() {
         title: "AI 분석 완료!",
         description: "신체 변화에 대한 AI 분석 결과를 확인해보세요.",
       })
-    } catch (error) {
-       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    } else {
        toast({
         variant: "destructive",
         title: "오류 발생",
-        description: `AI 분석에 실패했습니다: ${errorMessage}`,
+        description: result.error,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
