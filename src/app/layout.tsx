@@ -71,7 +71,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild className="w-full justify-start" tooltip="설정">
-                    <Link href="#">
+                    <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                        <span>설정</span>
                     </Link>
