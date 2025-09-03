@@ -1,28 +1,98 @@
-import type {Metadata} from 'next';
-import './globals.css';
+"use client"
+import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+  SidebarTrigger,
+  SidebarInset,
+  SheetTitle,
+} from "@/components/ui/sidebar"
+import { Logo } from "@/components/logo"
+import { UserNav } from "@/components/user-nav"
+import {
+  LayoutDashboard,
+  Dumbbell,
+  LineChart,
+  BookOpen,
+  Settings,
+} from "lucide-react"
 import { Toaster } from "@/components/ui/toaster"
 
-export const metadata: Metadata = {
-  title: '근육 부스터',
-  description: 'AI가 만들어주는 너만의 운동 계획',
-};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+const menuItems = [
+  { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+  { href: "/workout", label: "운동 생성", icon: Dumbbell },
+  { href: "/progress", label: "진행 상황", icon: LineChart },
+  { href: "/resources", label: "운동 정보", icon: BookOpen },
+]
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
   return (
-    <html lang="ko" className="dark" style={{colorScheme: "dark"}} suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body>
+        <SidebarProvider>
+          <Sidebar>
+            <SheetTitle className="sr-only">Sidebar</SheetTitle>
+            <SidebarHeader>
+              <Logo />
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                      className="w-full justify-start"
+                      tooltip={item.label}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild className="w-full justify-start" tooltip="설정">
+                    <Link href="#">
+                      <Settings className="mr-2 h-4 w-4" />
+                       <span>설정</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          </Sidebar>
+          <SidebarInset>
+            <header className="flex h-14 items-center justify-between gap-4 border-b bg-background/80 backdrop-blur-sm px-6">
+              <SidebarTrigger className="md:hidden" />
+              <div className="flex-1">
+                {/* Can add breadcrumbs or page title here */}
+              </div>
+              <UserNav />
+            </header>
+            <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+          </SidebarInset>
+        </SidebarProvider>
         <Toaster />
       </body>
     </html>
-  );
+  )
 }

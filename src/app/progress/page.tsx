@@ -233,7 +233,7 @@ export default function ProgressPage() {
                       <FormItem><FormLabel className="flex items-center gap-1"><User className="w-4 h-4 transform scale-x-150"/>어깨 둘레 (cm)</FormLabel><FormControl><Input type="number" {...field} placeholder="예: 115" /></FormControl><FormMessage /></FormItem>
                   )} />
                    <FormField control={form.control} name="waist" render={({ field }) => (
-                      <FormItem><FormLabel className="flex items-center gap-1"><Waves className="w-4 h-4"/>허리 둘레 (cm)</FormLabel><FormControl><Input type="number" {...field} placeholder="예: 75" /></FormControl><FormMessage /></FormMessage /></FormItem>
+                      <FormItem><FormLabel className="flex items-center gap-1"><Waves className="w-4 h-4"/>허리 둘레 (cm)</FormLabel><FormControl><Input type="number" {...field} placeholder="예: 75" /></FormControl><FormMessage /></FormItem>
                   )} />
               </CardContent>
               <CardFooter>

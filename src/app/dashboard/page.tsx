@@ -16,7 +16,7 @@ import { generateWorkoutPlan } from "@/ai/flows/generate-workout-plan"
 import type { GenerateWorkoutPlanOutput } from "@/ai/flows/generate-workout-plan"
 import { useToast } from "@/hooks/use-toast"
 import { useLocalStorage } from "@/hooks/use-local-storage"
-import type { Measurement } from "@/app/app/progress/page"
+import type { Measurement } from "@/app/progress/page"
 import { generateDailyGoal } from "@/ai/flows/generate-daily-goal"
 import type { GenerateDailyGoalOutput } from "@/ai/flows/generate-daily-goal"
 
