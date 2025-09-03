@@ -14,7 +14,6 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
-  SheetTitle,
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/logo"
 import { UserNav } from "@/components/user-nav"
@@ -44,7 +43,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <body>
         <SidebarProvider>
           <Sidebar>
-            <SheetTitle className="sr-only">Sidebar</SheetTitle>
             <SidebarHeader>
               <Logo />
             </SidebarHeader>

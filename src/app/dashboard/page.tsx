@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import type { Measurement } from "@/app/progress/page"
 import { generateDailyGoal } from "@/ai/flows/generate-daily-goal"
-import type { GenerateDailyGoalOutput } from "@/ai/flows/generate-daily-goal"
+import type { GenerateDailyGoalOutput } from "@/ai/schemas/daily-goal-schemas"
 
 
 export default function DashboardPage() {
